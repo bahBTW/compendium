@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Personagem - Compendium</title>
+    <style>
+        :root {
+            --primary: #8B0000;
+            --secondary: #333333;
+            --accent: #B8860B;
+            --text: #E0E0E0;
+            --background: #121212;
+            --edit-highlight: rgba(184, 134, 11, 0.3);
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--secondary);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+        }
+        
+        h1 {
+            color: var(--accent);
+            letter-spacing: 0.5rem;
+            font-size: 2.5rem;
+            margin: 0;
+        }
+        
+        .character-sheet {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .left-column {
+            grid-column: 1;
+        }
+        
+        .middle-column {
+            grid-column: 2;
+        }
+        
+        .right-column {
+            grid-column: 3;
+        }
+        
+        .character-info, .abilities, .notes, .skills, .inventory {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .attributes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .attribute {
+            background-color: rgba(139, 0, 0, 0.2);
+            padding: 0.5rem;
+            border-left: 3px solid var(--accent);
+            position: relative;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--accent);
+        }
+        
+        th {
+            background-color: rgba(184, 134, 11, 0.2);
+        }
+        
+        .ability {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--accent);
+            position: relative;
+        }
+        
+        .ability-name {
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .ability-cost {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            margin-right: 0.5rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: var(--secondary);
+            border-top: 3px solid var(--accent);
+            grid-column: 1 / -1;
+        }
+        
+        /* Estilos para campos editáveis */
+        [contenteditable="true"] {
+            padding: 0.2rem;
+            border-radius: 3px;
+            min-width: 20px;
+            display: inline-block;
+        }
+        
+        [contenteditable="true"]:focus {
+            outline: 2px solid var(--accent);
+            background-color: var(--edit-highlight);
+        }
+        
+        .edit-label {
+            font-size: 0.8rem;
+            color: var(--accent);
+            margin-left: 5px;
+            font-style: italic;
+        }
+        
+        .save-btn {
+            background-color: var(--accent);
+            color: var(--background);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+        
+        .save-btn:hover {
+            background-color: #d4a017;
+        }
+        
+        .skills-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0;
+        }
+        
+        .skill-name {
+            flex-grow: 1;
+        }
+        
+        .skill-value {
+            width: 40px;
+            text-align: right;
+        }
+        
+        .symbol {
+            font-size: 0.8rem;
+            color: var(--accent);
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Estilos para os botões de rolagem */
+        .roll-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            margin-left: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .roll-btn:hover {
+            background-color: #a52a2a;
+        }
+        
+        .attribute button {
+            margin-top: 0.5rem;
+            display: block;
+        }
+        
+        .skill-item button {
+            margin-left: 0.5rem;
+        }
+        
+        /* Estilo para o resultado da rolagem */
+        #roll-result {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--secondary);
+            padding: 1rem;
+            border: 1px solid var(--accent);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: none;
+            max-width: 300px;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+        
+        .critical {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .failure {
+            color: #F44336;
+            font-weight: bold;
+        }
+        
+        /* Botões de adicionar */
+        .add-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: var(--accent);
+            color: var(--background);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 1rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-btn:hover {
+            background-color: #d4a017;
+        }
+        
+        /* Estilo para itens de equipamento */
+        .equipment-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .equipment-name {
+            flex-grow: 1;
+        }
+        
+        .equipment-weight {
+            width: 50px;
+            text-align: right;
+        }
+        
+        /* Estilo para a seção de inventário */
+        .inventory h3 {
+            margin-top: 0;
+        }
+        
+        .equipment-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>C O M P E N D I U M</h1>
+    </header>
+    
+    <div class="character-sheet">
+        <div class="left-column">
+            <div class="character-info">
+                <h2 contenteditable="true">Nome do Personagem</h2><span class="edit-label">(clique para editar)</span>
+                <p><strong>Raça:</strong> <span contenteditable="true"></span></p>
+                <p><strong>Classe:</strong> <span contenteditable="true"></span></p>
+                <p><strong>Idade:</strong> <span contenteditable="true"></span></p>
+                <p><strong>Naturalidade:</strong> <span contenteditable="true"></span></p>
+                
+                <h3>Atributos</h3>
+                <div class="attributes">
+                    <div class="attribute">
+                        <strong>Força</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                    <div class="attribute">
+                        <strong>Destreza</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                    <div class="attribute">
+                        <strong>Constituição</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                    <div class="attribute">
+                        <strong>Inteligência</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                    <div class="attribute">
+                        <strong>Sabedoria</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                    <div class="attribute">
+                        <strong>Carisma</strong><br>
+                        <span contenteditable="true">10</span> <span contenteditable="true">+0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="skills">
+                <h3>Perícias</h3>
+                <div class="skills-grid">
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Acrobacia</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Adestramento</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Atletismo</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Atuação</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Cavalgar</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Conhecimento</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Diplomacia</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Enganação</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Fortitude</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Furtividade</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Guerra</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Iniciativa</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Intimidação</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Intuição</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Investigação</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Jogatina</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Ladinagem</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Luta</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Medicina</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Misticismo</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Nobreza</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Ofício</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Percepção</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Pilotagem</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Pontaria</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Reflexos</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Religião</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Sobrevivência</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                    <div class="skill-item">
+                        <span class="skill-name" contenteditable="true">Vontade</span>
+                        <span class="symbol"></span>
+                        <span class="skill-value" contenteditable="true">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="middle-column">
+            <div class="abilities">
+                <h2>Habilidades</h2>
+                <button class="add-btn" onclick="addAbility()">+</button>
+                
+                <div class="ability">
+                    <span class="ability-cost" contenteditable="true">0</span> PM
+                    <span class="ability-name" contenteditable="true">Nome da Habilidade</span>
+                    <p contenteditable="true">Descrição da habilidade.</p>
+                </div>
+                
+                <div class="ability">
+                    <span class="ability-cost" contenteditable="true">0</span> PM
+                    <span class="ability-name" contenteditable="true">Nome da Habilidade</span>
+                    <p contenteditable="true">Descrição da habilidade.</p>
+                </div>
+            </div>
+            
+            <div class="abilities">
+                <h2>Poderes</h2>
+                <button class="add-btn" onclick="addPower()">+</button>
+                <table>
+                    <tr>
+                        <th contenteditable="true">Poder</th>
+                        <th contenteditable="true">Efeito</th>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">Nome do Poder</td>
+                        <td contenteditable="true">Descrição do efeito</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">(clique para adicionar)</td>
+                        <td contenteditable="true">(clique para adicionar)</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="notes">
+                <h2>Anotações</h2>
+                <button class="add-btn" onclick="addNote('important-people')">+</button>
+                
+                <h3>Pessoas/Objetos Importantes</h3>
+                <ul id="important-people">
+                    <li><span contenteditable="true">(clique para adicionar)</span></li>
+                    <li><span contenteditable="true">(clique para adicionar)</span></li>
+                </ul>
+                
+                <button class="add-btn" onclick="addNote('quirks-scars')" style="top: 8.5rem;">+</button>
+                <h3>Manias/Cicatrizes</h3>
+                <ul id="quirks-scars">
+                    <li><span contenteditable="true">(clique para adicionar)</span></li>
+                    <li><span contenteditable="true">(clique para adicionar)</span></li>
+                </ul>
+                
+                <button class="save-btn" onclick="saveCharacter()">Salvar Ficha</button>
+            </div>
+        </div>
+        
+        <div class="right-column">
+            <div class="inventory">
+                <h2>Inventário</h2>
+                <button class="add-btn" onclick="addEquipment()">+</button>
+                
+                <h3>Equipamento</h3>
+                <ul class="equipment-list" id="equipment-list">
+                    <li class="equipment-item">
+                        <span class="equipment-name" contenteditable="true">Item 1</span>
+                        (<span class="equipment-weight" contenteditable="true">0</span>kg)
+                    </li>
+                    <li class="equipment-item">
+                        <span class="equipment-name" contenteditable="true">Item 2</span>
+                        (<span class="equipment-weight" contenteditable="true">0</span>kg)
+                    </li>
+                    <li class="equipment-item">
+                        <span class="equipment-name" contenteditable="true">Item 3</span>
+                        (<span class="equipment-weight" contenteditable="true">0</span>kg)
+                    </li>
+                </ul>
+                
+                <p><strong>Peso Total:</strong> <span id="total-weight">0</span>/<span contenteditable="true">0</span>kg</p>
+            </div>
+            
+            <div class="abilities">
+                <h2>Magias</h2>
+                <button class="add-btn" onclick="addSpell()">+</button>
+                
+                <div class="ability">
+                    <span class="ability-cost" contenteditable="true">0</span> PM
+                    <span class="ability-name" contenteditable="true">Nome da Magia</span>
+                    <p contenteditable="true">Descrição da magia.</p>
+                </div>
+                
+                <div class="ability">
+                    <span class="ability-cost" contenteditable="true">0</span> PM
+                    <span class="ability-name" contenteditable="true">Nome da Magia</span>
+                    <p contenteditable="true">Descrição da magia.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Compendium - Ficha de Personagem © 2025</p>
+    </footer>
+
+    <div id="roll-result"></div>
+
+    <script>
+        function rolarDado(faces, modificador = 0) {
+            return Math.floor(Math.random() * faces) + 1 + modificador;
+        }
+
+        function mostrarResultado(texto, critico = false, falha = false) {
+            const div = document.getElementById('roll-result');
+            div.innerHTML = texto;
+            div.style.display = 'block';
+            
+            if (critico) {
+                div.classList.add('critical');
+                div.classList.remove('failure');
+            } else if (falha) {
+                div.classList.add('failure');
+                div.classList.remove('critical');
+            } else {
+                div.classList.remove('critical', 'failure');
+            }
+            
+            setTimeout(() => {
+                div.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                div.style.opacity = '0';
+                setTimeout(() => div.style.display = 'none', 500);
+            }, 3000);
+        }
+
+        function rolarAtributo(atributoNome) {
+            const atributoElement = Array.from(document.querySelectorAll('.attribute')).find(el => 
+                el.querySelector('strong').textContent === atributoNome
+            );
+            
+            if (!atributoElement) {
+                mostrarResultado('Atributo não encontrado!');
+                return;
+            }
+            
+            const modificador = parseInt(atributoElement.querySelectorAll('span')[1].textContent) || 0;
+            
+            const rolagem = rolarDado(20);
+            const resultado = rolagem + modificador;
+            
+            const critico = rolagem === 20;
+            const falha = rolagem === 1;
+            
+            let mensagem = `<strong>Teste de ${atributoNome}</strong><br>`;
+            mensagem += `Rolagem: ${rolagem} (d20) + ${modificador}<br>`;
+            mensagem += `Total: <strong>${resultado}</strong>`;
+            
+            if (critico) {
+                mensagem += '<br><span class="critical">CRÍTICO!</span>';
+            } else if (falha) {
+                mensagem += '<br><span class="failure">FALHA CRÍTICA!</span>';
+            }
+            
+            mostrarResultado(mensagem, critico, falha);
+        }
+
+        function rolarPericia(periciaNome) {
+            const periciaElement = Array.from(document.querySelectorAll('.skill-name')).find(el => 
+                el.textContent.trim() === periciaNome
+            );
+            
+            if (!periciaElement) {
+                mostrarResultado('Perícia não encontrada!');
+                return;
+            }
+            
+            const valorPericia = parseInt(periciaElement.nextElementSibling.nextElementSibling.textContent) || 0;
+            
+            const rolagem = rolarDado(20);
+            const resultado = rolagem + valorPericia;
+            
+            const critico = rolagem === 20;
+            const falha = rolagem === 1;
+            
+            let mensagem = `<strong>Teste de ${periciaNome}</strong><br>`;
+            mensagem += `Rolagem: ${rolagem} (d20) + ${valorPericia}<br>`;
+            mensagem += `Total: <strong>${resultado}</strong>`;
+            
+            if (critico) {
+                mensagem += '<br><span class="critical">CRÍTICO!</span>';
+            } else if (falha) {
+                mensagem += '<br><span class="failure">FALHA CRÍTICA!</span>';
+            }
+            
+            mostrarResultado(mensagem, critico, falha);
+        }
+
+        function rolarDadoGenerico(faces) {
+            const resultado = rolarDado(faces);
+            mostrarResultado(`<strong>Rolagem de d${faces}</strong><br>Resultado: <strong>${resultado}</strong>`);
+        }
+
+        function adicionarBotoesRolagem() {
+            document.querySelectorAll('.attribute').forEach(attr => {
+                const nomeAtributo = attr.querySelector('strong').textContent;
+                const btn = document.createElement('button');
+                btn.textContent = 'Rolar d20';
+                btn.className = 'roll-btn';
+                btn.onclick = () => rolarAtributo(nomeAtributo);
+                attr.appendChild(btn);
+            });
+
+            document.querySelectorAll('.skill-item').forEach(skill => {
+                const nomePericia = skill.querySelector('.skill-name').textContent.trim();
+                const btn = document.createElement('button');
+                btn.textContent = 'Rolar d20';
+                btn.className = 'roll-btn';
+                btn.onclick = () => rolarPericia(nomePericia);
+                skill.appendChild(btn);
+            });
+
+            const footer = document.querySelector('footer');
+            const diceMenu = document.createElement('div');
+            diceMenu.style.marginTop = '1rem';
+            diceMenu.innerHTML = `
+                <span style="margin-right: 0.5rem;">Rolagem rápida:</span>
+                <button class="roll-btn" onclick="rolarDadoGenerico(4)">d4</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(6)">d6</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(8)">d8</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(10)">d10</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(12)">d12</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(20)">d20</button>
+                <button class="roll-btn" onclick="rolarDadoGenerico(100)">d100</button>
+            `;
+            footer.appendChild(diceMenu);
+        }
+
+        function addEquipment() {
+            const equipmentList = document.getElementById('equipment-list');
+            const newItem = document.createElement('li');
+            newItem.className = 'equipment-item';
+            newItem.innerHTML = `
+                <span class="equipment-name" contenteditable="true">Novo Item</span>
+                (<span class="equipment-weight" contenteditable="true">0</span>kg)
+            `;
+            equipmentList.appendChild(newItem);
+            updateWeight();
+        }
+
+        function addAbility() {
+            const abilitiesContainer = document.querySelector('.abilities:first-of-type');
+            const newAbility = document.createElement('div');
+            newAbility.className = 'ability';
+            newAbility.innerHTML = `
+                <span class="ability-cost" contenteditable="true">0</span> PM
+                <span class="ability-name" contenteditable="true">Nova Habilidade</span>
+                <p contenteditable="true">Descrição da habilidade.</p>
+            `;
+            abilitiesContainer.appendChild(newAbility);
+        }
+
+        function addPower() {
+            const powersTable = document.querySelector('.abilities:nth-of-type(2) table');
+            const newRow = powersTable.insertRow(-1);
+            newRow.innerHTML = `
+                <td contenteditable="true">Novo Poder</td>
+                <td contenteditable="true">Descrição do efeito</td>
+            `;
+        }
+
+        function addSpell() {
+            const spellsContainer = document.querySelector('.right-column .abilities');
+            const newSpell = document.createElement('div');
+            newSpell.className = 'ability';
+            newSpell.innerHTML = `
+                <span class="ability-cost" contenteditable="true">0</span> PM
+                <span class="ability-name" contenteditable="true">Nova Magia</span>
+                <p contenteditable="true">Descrição da magia.</p>
+            `;
+            spellsContainer.appendChild(newSpell);
+        }
+
+        function addNote(listId) {
+            const list = document.getElementById(listId);
+            const newItem = document.createElement('li');
+            newItem.innerHTML = '<span contenteditable="true">Nova entrada</span>';
+            list.appendChild(newItem);
+        }
+
+        function updateWeight() {
+            const weights = Array.from(document.querySelectorAll('.equipment-weight')).map(
+                el => parseInt(el.textContent) || 0
+            );
+            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+            document.getElementById('total-weight').textContent = totalWeight;
+        }
+
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('equipment-weight')) {
+                updateWeight();
+            }
+        });
+
+        function saveCharacter() {
+            const characterData = {
+                name: document.querySelector('h2').innerText,
+                race: document.querySelector('p:nth-of-type(1) span').innerText,
+                class: document.querySelector('p:nth-of-type(2) span').innerText,
+            };
+            
+            localStorage.setItem('characterData', JSON.stringify(characterData));
+            
+            mostrarResultado('Ficha salva localmente no navegador!');
+        }
+
+        window.onload = function() {
+            const savedData = localStorage.getItem('characterData');
+            if (savedData) {
+                const characterData = JSON.parse(savedData);
+                document.querySelector('h2').innerText = characterData.name;
+                document.querySelector('p:nth-of-type(1) span').innerText = characterData.race;
+                document.querySelector('p:nth-of-type(2) span').innerText = characterData.class;
+            }
+            
+            adicionarBotoesRolagem();
+            
+            updateWeight();
+        };
+    </script>
+</body>
+</html>
